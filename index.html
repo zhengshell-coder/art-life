@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f3f6fb">
 <meta name="format-detection" content="telephone=no">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=2">
 <script>if(/^https?:$/.test(location.protocol)){var _l=document.createElement('link');_l.rel='manifest';_l.href='manifest.webmanifest';document.head.appendChild(_l);}</script>
 <style>
 :root{--glass:rgba(255,255,255,.55);--glass-bd:rgba(255,255,255,.55);--hairline:rgba(20,30,60,.08);--shadow:0 10px 30px rgba(31,45,90,.10);--tx:#1f2747;--mut:#8b91a8;--ac:#2f7bff;--ac-soft:rgba(47,123,255,.12);--warn:#9a6b00;--fscale:1;--ac2:#0a6cff;--scrim:rgba(10,14,32,.5);--bg1:#dbe6ff;--bg2:#ffe6f3;--bg3:#e7e0ff;--bg4:#eef2fb;--bg5:#f1ecfb;--tint:#eef1fc}
@@ -3827,10 +3827,15 @@ async function searchLrclib(q){
     if(!r.ok)throw new Error('http '+r.status);
     let list=await r.json();
     if(!Array.isArray(list))list=[];
-    return list.filter(x=>!x.instrumental&&(x.plainLyrics||x.syncedLyrics)).map(x=>({
-      source:'LRCLIB',trackName:x.track_name||x.title||'',artistName:x.artist_name||x.artist||'',
-      albumName:x.album_name||'',duration:x.duration||0,plainLyrics:x.plainLyrics||'',syncedLyrics:x.syncedLyrics||''
-    }));
+    // LRCLIB 返回的是 trackName / artistName（驼峰），旧代码读 track_name 导致显示「未知歌曲」
+    const seen=new Set(),qq=q.replace(/\s+/g,'').toLowerCase();
+    const out=list.filter(x=>!x.instrumental&&(x.plainLyrics||x.syncedLyrics)).map(x=>({
+      source:'LRCLIB',trackName:x.trackName||x.track_name||x.name||x.title||'',artistName:x.artistName||x.artist_name||x.artist||'',
+      albumName:x.albumName||x.album_name||'',duration:x.duration||0,plainLyrics:x.plainLyrics||'',syncedLyrics:x.syncedLyrics||''
+    })).filter(x=>{const k=(x.trackName+'|'+x.artistName).toLowerCase();if(!x.trackName||seen.has(k))return false;seen.add(k);return true;});
+    // 歌手名或歌名正好等于搜索词的排在前面
+    const hit=x=>(x.artistName.replace(/\s+/g,'').toLowerCase().indexOf(qq)>=0||x.trackName.replace(/\s+/g,'').toLowerCase()===qq)?0:1;
+    return out.sort((a,b)=>hit(a)-hit(b));
   }catch(e){
     clearTimeout(timer);
     if(e.name==='AbortError')throw e;
