@@ -1,7 +1,7 @@
 /* 艺术人生 · 离线缓存
    页面本身：先联网取最新，断网用缓存；采样、字典、图标：先用缓存（体积大、不常变）。
    改了 sounds.js / lib 里的文件时，把 V 改一下，手机会自动换新。 */
-const V = 'art-2026-10-05b';
+const V = 'art-2026-10-06a';
 const CORE = ['./', 'index.html', 'manifest.webmanifest', 'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png'];
 const BIG = ['sounds.js', 'lib/pinyin-pro.min.js', 'lib/cmu-dict.js'];
 self.addEventListener('install', e => {
